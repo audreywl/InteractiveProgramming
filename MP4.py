@@ -3,8 +3,7 @@ import pygame
 from pygame.locals import QUIT, KEYDOWN #our only controller should be the keyboard (and music) so no need to import mouse stuff
 import time
 from random import choice
-import alsaaudio
-import audioop
+
 
 class PygameView(object):
 	""" Visualizes the music game in a pygame window """
@@ -88,16 +87,7 @@ class PyGameKeyboardController(object):
 
 
    
-inp = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK,0)
-inp.setchannels(1)
-inp.setrate(16000)
-inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-inp.setperiodsize(160)
-       
-while True:
-        l,data = inp.read()
-        if l:
-                print audioop.rms(data,2)
+
 
 
 if __name__ == '__main__':
