@@ -1,9 +1,13 @@
 """Runs pyalsa on a given song and pickles the values"""
 import alsaaudio as aa
 import audioop
-from time import sleep
+import time
 from struct import unpack
 import numpy as np
+import pickle
+
+# Save data to a file (will be part of your data fetching script)
+f = open('test_song','w')
 
 
 
@@ -30,15 +34,29 @@ def calculate_levels(data, chunk,sample_rate):
 	power = np.log10(np.abs(fourier))**2
 	# Arrange array into 8 rows for the 8 bars on LED matrix
 	power = np.reshape(power,(8,chunk/8))
-	matrix= np.int_(np.average(power,axis=1)/4)
-	return matrix
+	#matrix= np.int_(np.average(power,axis=1)/4)
+	#return matrix
+	return power
 
+song_time=raw_input('Please enter the length of the song')
+song_time=time.strptime(song_time,'%M:%S')
+print song_time
+#song_time=time.mktime(song_time)
+current_time=time.time()
+wait_time=time.time()+song_time[4]*60+song_time[5]
 print "Processing....."
-print data_in.cardname()
-print aa.pcms()
+#print data_in.cardname()
+#print aa.pcms()
+print current_time
+print song_time
+print wait_time
 
-while True:
-	# Read data from device   
+
+
+
+while current_time<wait_time:
+	# Read data from device
+	song_values=[]   
 	l,data = data_in.read()
 	data_in.pause(1) # Pause capture whilst RPi processes data
 	if l:
@@ -47,14 +65,20 @@ while True:
 			matrix=calculate_levels(data, chunk,sample_rate)
 			#for i in range (0,8):
 				#Set_Column((1<<matrix[i])-1,0xFF^(1<<i))
-			print matrix
+			song_values.append(matrix)
 		except audioop.error, e:
 			if e.message !="not a whole number of frames":
 				raise e
-	sleep(0.001)
+	time.sleep(0.001)
+	current_time=time.time()
+	print wait_time-current_time
 	data_in.pause(0) # Resume capture
+
+pickle.dump(song_values,f)
+f.close()
 	   
-while True:
-		l,data = inp.read()
-		if l:
-				print audioop.rms(data,2)
+# while True:
+# 		l,data = inp.read()
+# 		if l:
+# 				print audioop.rms(data,2)
+
