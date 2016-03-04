@@ -115,4 +115,3 @@ if __name__ == '__main__':
             controller.handle_event(event)
         view.draw()
         time.sleep(.001)
->>>>>>> ffdfe7a3b0a155d99eff18304fbc8fc128c3a7e0
