@@ -86,14 +86,14 @@ class MusicGameModel(object):
 	""" Stores the game state for our visualizer game """
 	def __init__(self):
 		self.bars = []
-		self.MARGIN = 25
+		self.MARGIN = 5
 		self.BAR_WIDTH = 20
-		self.BAR_HEIGHT = 1
+		self.BAR_HEIGHT = 20
 		lc = self.MARGIN
 		for i in range(0,16):
 			tc = 480-self.BAR_HEIGHT
 			bar = Bar(lc, tc, self.BAR_WIDTH, self.BAR_HEIGHT)
-			lc += self.BAR_HEIGHT + self.MARGIN
+			lc += self.BAR_HEIGHT + self.MARGIN +self.BAR_WIDTH
 			self.bars.append(bar)
 		# for i in music_heights:
 		# 	lc = (self.MARGIN)
@@ -141,7 +141,7 @@ class PyGameKeyboardController(object):
 				self.model.character.left -= 10
 			elif event.key == pygame.K_RIGHT:
 				self.model.character.left += 10
-			if event.key == pygame.K_UP:
+			if event.key == pygame.K_DOWN:
 				self.model.character.top += 10
 		# elif event.type == KEYDOWN:
 		#     if event.key == pygame.K_UP:
@@ -182,7 +182,7 @@ class MusicController(object):
 			bars_list=self.model.bars
 			current_bar=bars_list[i]
 			current_bar.height=5*music_chunk[i]
-			current_bar.top=5*music_chunk[i]
+			current_bar.top=480-5*music_chunk[i]
 
 
 if __name__ == '__main__':
