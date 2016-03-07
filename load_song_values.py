@@ -7,7 +7,7 @@ import numpy as np
 import pickle
 
 # Save data to a file (will be part of your data fetching script)
-#f = open('test_song.pickle','w')
+f = open('test_song.pickle','w')
 
 
 
@@ -34,22 +34,23 @@ def calculate_levels(data, chunk,sample_rate):
 	power = np.log10(np.abs(fourier))**2
 	# Arrange array into 8 rows for the 8 bars on LED matrix
 	power = np.reshape(power,(16,chunk/16))
-	matrix= np.int_(np.average(power, axis=1))
+	matrix= (np.average(power, axis=1))
+	pretty_matrix = np.int_(matrix)
 	matrix=matrix.tolist()
+	#print pretty_matrix
 	return matrix
 
 song_time=raw_input('Please enter the length of the song')
 song_time=time.strptime(song_time,'%M:%S')
-print song_time
-#song_time=time.mktime(song_time)
+#print song_time
 current_time=time.time()
 wait_time=time.time()+song_time[4]*60+song_time[5]
 print "Processing....."
 #print data_in.cardname()
 #print aa.pcms()
-print current_time
-print song_time
-print wait_time
+#print current_time
+#print song_time
+#print wait_time
 
 
 
@@ -65,7 +66,7 @@ while current_time<wait_time:
 			matrix=calculate_levels(data, chunk,sample_rate)
 			#for i in range (0,8):
 				#Set_Column((1<<matrix[i])-1,0xFF^(1<<i))
-			print matrix
+			#print matrix
 			song_values.append(matrix)
 		except audioop.error, e:
 			if e.message !="not a whole number of frames":
@@ -74,11 +75,11 @@ while current_time<wait_time:
 	current_time=time.time()
 	#print wait_time-current_time
 	data_in.pause(0) # Resume capture
-print song_values
-print type(song_values)
+#print song_values
+#print type(song_values)
 
-#pickle.dump(song_values,f)
-#f.close()
+pickle.dump(song_values,f)
+f.close()
 	   
 # while True:
 # 		l,data = inp.read()
