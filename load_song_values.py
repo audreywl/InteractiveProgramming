@@ -35,21 +35,22 @@ def calculate_levels(data, chunk,sample_rate):
 	# Arrange array into 8 rows for the 8 bars on LED matrix
 	power = np.reshape(power,(16,chunk/16))
 	matrix= (np.average(power, axis=1))
+	pretty_matrix = np.int_(matrix)
 	matrix=matrix.tolist()
+	#print pretty_matrix
 	return matrix
 
 song_time=raw_input('Please enter the length of the song')
 song_time=time.strptime(song_time,'%M:%S')
-print song_time
-#song_time=time.mktime(song_time)
+#print song_time
 current_time=time.time()
 wait_time=time.time()+song_time[4]*60+song_time[5]
 print "Processing....."
 #print data_in.cardname()
 #print aa.pcms()
-print current_time
-print song_time
-print wait_time
+#print current_time
+#print song_time
+#print wait_time
 
 
 
@@ -72,10 +73,10 @@ while current_time<wait_time:
 				raise e
 	time.sleep(0.001)
 	current_time=time.time()
-	print wait_time-current_time
+	#print wait_time-current_time
 	data_in.pause(0) # Resume capture
-print song_values
-print type(song_values)
+#print song_values
+#print type(song_values)
 
 pickle.dump(song_values,f)
 f.close()

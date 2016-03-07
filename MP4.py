@@ -1,13 +1,17 @@
 """This is Katie and Audrey's Software Design Mini-Project 4. It uses pygame to load a music visualizer that you can jump on"""
 import pygame
-from pygame.locals import QUIT, KEYDOWN #our only controller should be the keyboard (and music) so no need to import mouse stuff
+from pygame.locals import QUIT, KEYDOWN, KEYUP #our only controller should be the keyboard (and music) so no need to import mouse stuff
 import time
 from random import choice
+import alsaaudio
+import pickle
 inp = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK,0)
 
-f = open('song_values.pickle','r')
+f = open('test_song','r')
 music_heights = pickle.load(f)
 f.close()
+print type(music_heights)
+print type(music_heights[0])
 print music_heights
 
 class PygameView(object):
@@ -23,15 +27,19 @@ class PygameView(object):
         self.screen.fill(pygame.Color('black')) #have a black background
         #TODO:draw music bars
         for bar in self.model.bars:
+            print bar.left
+            print bar.top
+            print bar.width
+            print bar.height
             r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
-            pygame.draw.rect(self.screen, pygame.Color(bar.color), g)
+            pygame.draw.Rect(self.screen, pygame.Color(bar.color),r)
 
         #draw the character to the screen
         r = pygame.Rect(self.model.character.left,
                         self.model.character.top,
                         self.model.character.width,
                         self.model.character.height)
-        pygame.draw.rect(self.screen, pygame.Color('white'), r)
+        pygame.draw.Rect(self.screen, pygame.Color('white'), r)
         pygame.display.update()
 
 class Bar(object):
@@ -54,17 +62,17 @@ class Character(object):
 class MusicGameModel(object):
     """ Stores the game state for our visualizer game """
     def __init__(self):
-        self.bars = music_heights
+    	self.bars = []
         self.MARGIN = 5
         self.BAR_WIDTH = 20
         for i in music_heights:
             lc = (self.MARGIN)
-            for height in i:
-                self.BAR_HEIGHT = height
-                tc = 480 - height 
+            for heights in i:
+                self.BAR_HEIGHT = heights
+                tc = 480 - heights 
                 bar = Bar(lc, tc, self.BAR_WIDTH, self.BAR_HEIGHT)
                 lc += self.BAR_WIDTH + self.MARGIN
-        self.bars.append(bar)
+        	self.bars.append(bar)
         self.character = Character(self.MARGIN, self.MARGIN + 20, 50, 20)
 
     # def __init__(self):
@@ -95,19 +103,19 @@ class PyGameKeyboardController(object):
     def handle_event(self, event):
         """ Look for keypresses to
             modify the x adn y positions of the character"""
-        pygame.set_repeat(10,10)
-        if event.type == KEYUP:
+        #pygame..set_repeat(10,10)
+        if event.type == KEYDOWN:
         #TODO: Modify character left and top based on keypress
             #RESEARCH: is possible for length of keypress to modify height of jump?
             if event.key == pygame.K_LEFT:
                 self.model.character.left -= 10
             elif event.key == pygame.K_RIGHT:
                 self.model.character.left += 10
-            if event.key = K_UP:
+            if event.key == K_UP:
                 self.model.character.top += 10
-        elif event.type == KEYDOWN
-            if event.key == pygame.K_UP:
-                if 
+        # elif event.type == KEYDOWN:
+        #     if event.key == pygame.K_UP:
+        #         if 
         # pygame.set_repeat() -> None
         # pygame.set_repeat(delay, interval) -> None
         # get_repeat() -> (delay, interval)
