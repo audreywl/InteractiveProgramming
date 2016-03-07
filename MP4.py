@@ -3,6 +3,7 @@ import pygame
 from pygame.locals import QUIT, KEYDOWN #our only controller should be the keyboard (and music) so no need to import mouse stuff
 import time
 from random import choice
+inp = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK,0)
 
 
 class PygameView(object):
