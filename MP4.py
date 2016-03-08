@@ -9,17 +9,10 @@ import pickle
 import math
 import numpy as np
 from struct import unpack
-#from load_song_values import calculate_levels
-#inp = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK,0)
 
-# f = open('test_song','r')
-# music_heights = pickle.load(f)
-# f.close()
-# print type(music_heights)
-# print type(music_heights[0])
-# print music_heights
 
 def calculate_levels(data, chunk,sample_rate):
+	"""This code, which we got from somebody else's project at https://www.raspberrypi.org/forums/viewtopic.php?p=314087, performs a fourier transform on the incoming audio stream, finding the amplitudes of 16 frequencies"""
 	# Convert raw data to numpy array
 	data = unpack("%dh"%(len(data)/2),data)
 	data = np.array(data, dtype='h')
@@ -29,12 +22,14 @@ def calculate_levels(data, chunk,sample_rate):
 	fourier=np.delete(fourier,len(fourier)-1)
 	# Find amplitude
 	power = np.log10(np.abs(fourier))**2
-	# Arrange array into 8 rows for the 8 bars on LED matrix
+	# Arrange array into 16 rows
 	power = np.reshape(power,(16,chunk/16))
 	matrix= (np.average(power, axis=1))
-	pretty_matrix = np.int_(matrix)
-	matrix=matrix.tolist()
+	#This was part of testing how the music affected the transform by displaying it in the command line
+	#pretty_matrix = np.int_(matrix)
 	#print pretty_matrix
+	#Convert out of the weird numpy types
+	matrix=matrix.tolist()
 	return matrix
 
 class PygameView(object):
@@ -48,16 +43,10 @@ class PygameView(object):
 	def draw(self):
 		""" Draw the game state to the screen """
 		self.screen.fill(pygame.Color('black')) #have a black background
-		#TODO:draw music bars
+		#draw the music bars to the screen
 		for bar in self.model.bars:
-			# print bar.left
-			# print bar.top
-			# print bar.width
-			# print bar.height
-			# print type(bar.left)
 			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
 			pygame.draw.rect(self.screen, pygame.Color(bar.color),r)
-
 		#draw the character to the screen
 		r = pygame.Rect(self.model.character.left,
 						self.model.character.top,
@@ -73,7 +62,7 @@ class Bar(object):
 		self.top = top
 		self.width = width
 		self.height = height
-		self.color = 'red'
+		self.color = 'red' #TODO: make this more interesting colors
 
 class Character(object):
 	""" Our little main character (also a rectanlge) """
@@ -95,13 +84,16 @@ class Character(object):
 		self.left += self.vx
 		self.top += self.vy
 		self.bottom = self.top+self.height
+		#checks for collisions with the bottom of the screen
 		if self.bottom > 480:
 			self.top = 480-self.height
+		#TODO: check for collisions with the music bars
 
 
 class MusicGameModel(object):
 	""" Stores the game state for our visualizer game """
 	def __init__(self):
+		#Initialize bars
 		self.bars = []
 		self.MARGIN = 3
 		self.BAR_WIDTH = 20
@@ -112,73 +104,32 @@ class MusicGameModel(object):
 			bar = Bar(lc, tc, self.BAR_WIDTH, self.BAR_HEIGHT)
 			lc += self.BAR_HEIGHT + self.MARGIN +self.BAR_WIDTH
 			self.bars.append(bar)
-		# for i in music_heights:
-		# 	lc = (self.MARGIN)
-		# 	for heights in i:
-		# 		self.BAR_HEIGHT = heights
-		# 		tc = 480 - heights 
-		# 		bar = Bar(lc, tc, self.BAR_WIDTH, self.BAR_HEIGHT)
-		# 		lc += self.BAR_WIDTH + self.MARGIN
-		# 	self.bars.append(bar)
-		self.character = Character(self.MARGIN, self.MARGIN + 20, 50, 20)
+		#initialize character
+		self.character = Character(self.MARGIN, self.MARGIN + 20, 20, 50)
 
-	# def __init__(self):
-	#   self.bars = []
-	#   self.MARGIN = 5
-
-	# #TODO: Implement bars initialization
-
-	#   for new in range(song_values[]):
-	#       new_bar = Bar(5, 5, 20, song_values[0[]])
-	#       self.bars.append(new_bar)
-	#       for left in range(self.MARGIN,
-	#                         640 - self.BAR_WIDTH - self.MARGIN,
-	#                         self.BAR_WIDTH + self.MARGIN):
-	#           for top in range(self.MARGIN,
-	#                            480/3 + self.BAR_HEIGHT + self.MARGIN):
-	#               brick = Bar(left, top, self.BAR_WIDTH, self.BRICK_HEIGHT)
-	#               self.bricks.append(brick)
-
-	#TODO: Implement character initialization
-		# self.paddle = Paddle(640/2, 480 - 30, 50, 20)
+	#TODO: Maybe update_physics, and the collision code, should be down here?
 
 
 class PyGameKeyboardController(object):
 	def __init__(self, model):
 		self.model = model
-		self.speed = 0.01
-		self.angle = 0
 
 	def handle_event(self, event):
 		""" Look for keypresses to
 			modify the x adn y positions of the character"""
-		#pygame..set_repeat(10,10)
+		pygame.set_repeat(10,20)
+		#TODO: Character should continue moving until you let the key up, except for jumping
 		if event.type == KEYDOWN:
-		#TODO: Modify character left and top based on keypress
-			#RESEARCH: is possible for length of keypress to modify height of jump?
 			if event.key == pygame.K_LEFT:
-				#self.model.character.left -= 10
 				self.model.character.update_physics(-10)
 			elif event.key == pygame.K_RIGHT:
-				#self.model.character.left += 10
 				self.model.character.update_physics(10)
 			if event.key == pygame.K_UP:
-				#self.model.character.top += 10
 				self.model.character.update_physics(0,-60)
-		# elif event.type == KEYDOWN:
-		#     if event.key == pygame.K_UP:
-		#         if 
 		# pygame.set_repeat() -> None
 		# pygame.set_repeat(delay, interval) -> None
 		# get_repeat() -> (delay, interval)
 
-	# def projectile_motion(self):
-	# 	g = -9.8 #ms^-2
-	# 	vy = 0
-
-
-FLOOR = 480
-CEILING = 10
 
 class MusicController(object):
 	def __init__(self, model):
@@ -189,7 +140,7 @@ class MusicController(object):
 		for i in range(len(music_chunk)):
 			bars_list=self.model.bars
 			current_bar=bars_list[i]
-			current_bar.height=300-5*music_chunk[i]
+			current_bar.height=400-20*music_chunk[i]
 			current_bar.top=480-current_bar.height
 
 
@@ -213,13 +164,6 @@ if __name__ == '__main__':
 	running = True
 	while running:
 		model.character.update_physics()
-		#Controller Movement
-		# if controller.jumping:
-	 #        controller.jump()
-	 #    if controller.falling:
-	 #        controller.fall()
-	 #    else:
-	 #        controller.InvisWalls()
 		#Quit Game
 		for event in pygame.event.get():
 			if event.type == QUIT:
