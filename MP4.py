@@ -53,6 +53,7 @@ class PygameView(object):
 			# print bar.top
 			# print bar.width
 			# print bar.height
+			# print type(bar.left)
 			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
 			pygame.draw.rect(self.screen, pygame.Color(bar.color),r)
 
@@ -81,12 +82,27 @@ class Character(object):
 		self.top = top
 		self.width = width
 		self.height = height
+		self.bottom = self.top+self.height
+		self.vx = 0 #horizontal velocity
+		self.vy = 0 #vertical velocity
+		self.a = -10 #acceleration
+
+	def update_physics(self, vx=0, vy=0):
+		"""Adjust position and velocity"""
+		self.vx = vx
+		self.vy = vy - self.a
+		self.left += self.vx
+		self.top += self.vy
+		self.bottom = self.top+self.height
+		if self.bottom > 480:
+			self.top = 480-self.height
+
 
 class MusicGameModel(object):
 	""" Stores the game state for our visualizer game """
 	def __init__(self):
 		self.bars = []
-		self.MARGIN = 5
+		self.MARGIN = 3
 		self.BAR_WIDTH = 20
 		self.BAR_HEIGHT = 20
 		lc = self.MARGIN
@@ -138,11 +154,14 @@ class PyGameKeyboardController(object):
 		#TODO: Modify character left and top based on keypress
 			#RESEARCH: is possible for length of keypress to modify height of jump?
 			if event.key == pygame.K_LEFT:
-				self.model.character.left -= 10
+				#self.model.character.left -= 10
+				self.model.character.update_physics(-10)
 			elif event.key == pygame.K_RIGHT:
-				self.model.character.left += 10
-			if event.key == pygame.K_DOWN:
-				self.model.character.top += 10
+				#self.model.character.left += 10
+				self.model.character.update_physics(10)
+			if event.key == pygame.K_UP:
+				#self.model.character.top += 10
+				self.model.character.update_physics(0,-60)
 		# elif event.type == KEYDOWN:
 		#     if event.key == pygame.K_UP:
 		#         if 
@@ -181,8 +200,8 @@ class MusicController(object):
 		for i in range(len(music_chunk)):
 			bars_list=self.model.bars
 			current_bar=bars_list[i]
-			current_bar.height=5*music_chunk[i]
-			current_bar.top=480-5*music_chunk[i]
+			current_bar.height=300-5*music_chunk[i]
+			current_bar.top=480-current_bar.height
 
 
 if __name__ == '__main__':
@@ -204,6 +223,7 @@ if __name__ == '__main__':
 	data_in.setperiodsize(chunk)
 	running = True
 	while running:
+		model.character.update_physics()
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				running = False
@@ -214,7 +234,7 @@ if __name__ == '__main__':
 		if l:
 		# catch frame error
 			try:
-				current_levels=calculate_levels(data, chunk,sample_rate)
+				current_levels=calculate_levels(data, chunk, sample_rate)
 				music.adjust_bars(current_levels)
 			except audioop.error, e:
 				if e.message !="not a whole number of frames":
