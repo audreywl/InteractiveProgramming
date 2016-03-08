@@ -77,17 +77,7 @@ class Character(object):
 		self.vy = 0 #vertical velocity
 		self.a = -10 #acceleration
 
-	def update_physics(self, vx=0, vy=0):
-		"""Adjust position and velocity"""
-		self.vx = vx
-		self.vy = vy - self.a
-		self.left += self.vx
-		self.top += self.vy
-		self.bottom = self.top+self.height
-		#checks for collisions with the bottom of the screen
-		if self.bottom > 480:
-			self.top = 480-self.height
-		#TODO: check for collisions with the music bars
+	
 
 
 class MusicGameModel(object):
@@ -95,6 +85,7 @@ class MusicGameModel(object):
 	def __init__(self):
 		#Initialize bars
 		self.bars = []
+		self.pybars = []
 		self.MARGIN = 3
 		self.BAR_WIDTH = 20
 		self.BAR_HEIGHT = 20
@@ -106,26 +97,58 @@ class MusicGameModel(object):
 			self.bars.append(bar)
 		#initialize character
 		self.character = Character(self.MARGIN, self.MARGIN + 20, 20, 50)
+		self.pychar = pygame.Rect(self.character.left, self.character.top, self.character.width, self.character.height)
+		#Turn stuff into actual pygame objects
+		for bar in self.bars:
+			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
+			self.pybars.append(r)
 
+	def update_physics(self, vx=0, vy=0):
+		"""Adjust position and velocity"""
+		self.character.vx = vx
+		self.character.vy = vy - self.character.a
+		self.character.left += self.character.vx
+		self.character.top += self.character.vy
+		self.character.bottom = self.character.top+self.character.height
+		#checks for collisions with the bottom of the screen
+		if self.character.bottom > 480:
+			self.character.top = 480-self.character.height
+		#TODO: check for collisions with the music bars
 	#TODO: Maybe update_physics, and the collision code, should be down here?
+
+	def detect_collisions(self):
+		"""checks if there are collisions with anything. If so, moves the character up out of the way"""
+		self.pychar = pygame.Rect(self.character.left, self.character.top, self.character.width, self.character.height)
+		#Turn stuff into actual pygame objects
+		for bar in self.bars:
+			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
+			self.pybars.append(r)
+		for bar in self.pybars:
+			#check if the bar and character are colliding
+			if bar.colliderect(self.pychar):
+				#check if it approached from the top (the top row of the bar is inside character rectangle)
+				for point in range(bar.left,bar.left+bar.width):
+					if bar.collidepoint:
+						self.character.top -=10
+						break
+						print 'COLLISION'
 
 
 class PyGameKeyboardController(object):
 	def __init__(self, model):
 		self.model = model
+		pygame.key.set_repeat(10,20)
 
 	def handle_event(self, event):
 		""" Look for keypresses to
 			modify the x adn y positions of the character"""
-		pygame.set_repeat(10,20)
-		#TODO: Character should continue moving until you let the key up, except for jumping
 		if event.type == KEYDOWN:
 			if event.key == pygame.K_LEFT:
-				self.model.character.update_physics(-10)
+				self.model.update_physics(-10)
 			elif event.key == pygame.K_RIGHT:
-				self.model.character.update_physics(10)
+				self.model.update_physics(10)
 			if event.key == pygame.K_UP:
-				self.model.character.update_physics(0,-60)
+				self.model.update_physics(0,-60)
 		# pygame.set_repeat() -> None
 		# pygame.set_repeat(delay, interval) -> None
 		# get_repeat() -> (delay, interval)
@@ -163,7 +186,8 @@ if __name__ == '__main__':
 	data_in.setperiodsize(chunk)
 	running = True
 	while running:
-		model.character.update_physics()
+		model.update_physics()
+		model.detect_collisions()
 		#Quit Game
 		for event in pygame.event.get():
 			if event.type == QUIT:
@@ -181,5 +205,5 @@ if __name__ == '__main__':
 				if e.message !="not a whole number of frames":
 					raise e
 		view.draw()
-		time.sleep(.05)
+		time.sleep(.09)
 		data_in.pause(0)
