@@ -6,6 +6,7 @@ from random import choice
 import alsaaudio as aa
 import audioop
 import pickle
+import math
 import numpy as np
 from struct import unpack
 #from load_song_values import calculate_levels
@@ -145,6 +146,8 @@ class MusicGameModel(object):
 class PyGameKeyboardController(object):
 	def __init__(self, model):
 		self.model = model
+		self.speed = 0.01
+		self.angle = 0
 
 	def handle_event(self, event):
 		""" Look for keypresses to
@@ -169,28 +172,14 @@ class PyGameKeyboardController(object):
 		# pygame.set_repeat(delay, interval) -> None
 		# get_repeat() -> (delay, interval)
 
-		# if e.type == KEYDOWN:
-		#         if e.key == K_LEFT:
-		#             ship.xspeed -= SPEED
-		#         elif e.key == K_RIGHT:
-		#             ship.xspeed += SPEED
-		#         elif e.key == K_UP:
-		#             ship.yspeed -= SPEED
-		#         elif e.key == K_DOWN:
-		#             ship.yspeed += SPEED
-		#         elif e.key == K_SPACE
-		#             ship.firing = True
-		#     elif e.type == KEYUP:
-		#         if e.key == K_LEFT:
-		#             ship.xspeed += SPEED
-		#         elif e.key == K_RIGHT:
-		#             ship.xspeed -= SPEED
-		#         elif e.key == K_UP:
-		#             ship.yspeed += SPEED
-		#         elif e.key == K_DOWN:
-		#             ship.yspeed -= SPEED
-		#         elif e.key == K_SPACE:
-		#             ship.firing == False
+	# def projectile_motion(self):
+	# 	g = -9.8 #ms^-2
+	# 	vy = 0
+
+
+FLOOR = 480
+CEILING = 10
+
 class MusicController(object):
 	def __init__(self, model):
 		self.model = model
@@ -224,6 +213,14 @@ if __name__ == '__main__':
 	running = True
 	while running:
 		model.character.update_physics()
+		#Controller Movement
+		# if controller.jumping:
+	 #        controller.jump()
+	 #    if controller.falling:
+	 #        controller.fall()
+	 #    else:
+	 #        controller.InvisWalls()
+		#Quit Game
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				running = False
