@@ -214,7 +214,7 @@ if __name__ == '__main__':
 		if l:
 		# catch frame error
 			try:
-				current_levels=calculate_levels(data, chunk,sample_rate)
+				current_levels=calculate_levels(data, chunk, sample_rate)
 				music.adjust_bars(current_levels)
 			except audioop.error, e:
 				if e.message !="not a whole number of frames":
