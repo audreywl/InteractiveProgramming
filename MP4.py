@@ -76,24 +76,23 @@ class Character(object):
 		self.vx = 0 #horizontal velocity
 		self.vy = 0 #vertical velocity
 		self.a = -10 #acceleration
+		self.on_ground = False
 
 	
-
-
 class MusicGameModel(object):
 	""" Stores the game state for our visualizer game """
 	def __init__(self):
 		#Initialize bars
 		self.bars = []
 		self.pybars = []
-		self.MARGIN = 3
-		self.BAR_WIDTH = 20
+		self.MARGIN = 5
+		self.BAR_WIDTH = 50
 		self.BAR_HEIGHT = 20
 		lc = self.MARGIN
 		for i in range(0,16):
 			tc = 480-self.BAR_HEIGHT
 			bar = Bar(lc, tc, self.BAR_WIDTH, self.BAR_HEIGHT)
-			lc += self.BAR_HEIGHT + self.MARGIN +self.BAR_WIDTH
+			lc += self.MARGIN +self.BAR_WIDTH
 			self.bars.append(bar)
 		#initialize character
 		self.character = Character(self.MARGIN, self.MARGIN + 20, 20, 50)
@@ -113,6 +112,16 @@ class MusicGameModel(object):
 		#checks for collisions with the bottom of the screen
 		if self.character.bottom > 480:
 			self.character.top = 480-self.character.height
+			self.character.on_ground = True
+		#checks for collisions with the bottom of the screen
+		if self.character.top < 0:
+			self.character.top = 0
+		#checks for collisions with the bottom of the screen
+		if self.character.left < 0:
+			self.character.left = 0
+		#checks for collisions with the bottom of the screen
+		if self.character.left > 640-self.character.width:
+			self.character.left = 640-self.character.width
 		#TODO: check for collisions with the music bars
 	#TODO: Maybe update_physics, and the collision code, should be down here?
 
@@ -129,12 +138,21 @@ class MusicGameModel(object):
 				#check if it approached from the top (the top row of the bar is inside character rectangle)
 				for point in range(bar.left,bar.left+bar.width):
 					if bar.collidepoint:
-						self.character.top -=10
+						self.character.on_ground = True
+						self.character.top -= 1
+						#self.character.top = self.bar.top + self.character.height
+						#self.character.bottom = self.bar.top
+						#print 'COLLISION'
 						break
-						print 'COLLISION'
+
+	def jump(self):
+		"""Keeps character from jumping in mid-air"""
+		if self.character.on_ground:
+			pass
 
 
 class PyGameKeyboardController(object):
+# class PyGameController(object):
 	def __init__(self, model):
 		self.model = model
 		pygame.key.set_repeat(10,20)
@@ -145,14 +163,14 @@ class PyGameKeyboardController(object):
 		if event.type == KEYDOWN:
 			if event.key == pygame.K_LEFT:
 				self.model.update_physics(-10)
+				self.model.detect_collisions()
 			elif event.key == pygame.K_RIGHT:
 				self.model.update_physics(10)
+				self.model.detect_collisions()
 			if event.key == pygame.K_UP:
+				
 				self.model.update_physics(0,-60)
-		# pygame.set_repeat() -> None
-		# pygame.set_repeat(delay, interval) -> None
-		# get_repeat() -> (delay, interval)
-
+				self.model.detect_collisions()
 
 class MusicController(object):
 	def __init__(self, model):
@@ -160,10 +178,15 @@ class MusicController(object):
 
 	def adjust_bars(self, music_chunk):
 		"""Changes the bars heights in the model based on the current values for music"""
-		for i in range(len(music_chunk)):
+		mc_sum = 0
+		for i in range(len(music_chunk[:-1])):
+			mc_sum += music_chunk[i+1]
+		avg_mc = mc_sum/len(music_chunk[1:-1])
+
+		for i in range(len(music_chunk[:-1])):
 			bars_list=self.model.bars
-			current_bar=bars_list[i]
-			current_bar.height=400-20*music_chunk[i]
+			current_bar=bars_list[i-1]
+			current_bar.height=300-100*math.fabs(music_chunk[i]-avg_mc)
 			current_bar.top=480-current_bar.height
 
 
@@ -186,8 +209,7 @@ if __name__ == '__main__':
 	data_in.setperiodsize(chunk)
 	running = True
 	while running:
-		model.update_physics()
-		model.detect_collisions()
+		
 		#Quit Game
 		for event in pygame.event.get():
 			if event.type == QUIT:
@@ -204,6 +226,8 @@ if __name__ == '__main__':
 			except audioop.error, e:
 				if e.message !="not a whole number of frames":
 					raise e
+		model.detect_collisions()
+		model.update_physics()
 		view.draw()
-		time.sleep(.09)
+		time.sleep(.1)
 		data_in.pause(0)
