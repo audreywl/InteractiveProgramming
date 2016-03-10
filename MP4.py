@@ -55,7 +55,7 @@ class PygameView(object):
 		pygame.draw.rect(self.screen, pygame.Color('white'), r)
 		pygame.display.update()
 
-class Bar(object):
+class Bar(pygame.Rect):
 	"""A single vertical rectangle in the music visualizer"""
 	def __init__(self, left, top, width, height):
 		self.left = left
@@ -64,7 +64,7 @@ class Bar(object):
 		self.height = height
 		self.color = 'red' #TODO: make this more interesting colors
 
-class Character(object):
+class Character(pygame.Rect):
 	""" Our little main character (also a rectanlge) """
 	def __init__(self, left, top, width, height):
 		""" Initialize our character """
@@ -77,6 +77,7 @@ class Character(object):
 		self.vy = 0 #vertical velocity
 		self.a = -10 #acceleration
 		self.on_ground = False
+		self.which_bar = None
 
 	
 class MusicGameModel(object):
@@ -109,47 +110,50 @@ class MusicGameModel(object):
 		self.character.left += self.character.vx
 		self.character.top += self.character.vy
 		self.character.bottom = self.character.top+self.character.height
-		#checks for collisions with the bottom of the screen
-		if self.character.bottom > 480:
-			self.character.top = 480-self.character.height
-			self.character.on_ground = True
-		#checks for collisions with the bottom of the screen
-		if self.character.top < 0:
-			self.character.top = 0
-		#checks for collisions with the bottom of the screen
-		if self.character.left < 0:
-			self.character.left = 0
-		#checks for collisions with the bottom of the screen
-		if self.character.left > 640-self.character.width:
-			self.character.left = 640-self.character.width
-		#TODO: check for collisions with the music bars
-	#TODO: Maybe update_physics, and the collision code, should be down here?
+		
 
 	def detect_collisions(self):
 		"""checks if there are collisions with anything. If so, moves the character up out of the way"""
 		self.pychar = pygame.Rect(self.character.left, self.character.top, self.character.width, self.character.height)
-		#Turn stuff into actual pygame objects
+		# #Turn stuff into actual pygame objects - unnecessary because inheritance!
 		for bar in self.bars:
-			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
-			self.pybars.append(r)
-		for bar in self.pybars:
+			i = self.bars.index(bar)
 			#check if the bar and character are colliding
-			if bar.colliderect(self.pychar):
+			if bar.colliderect(self.character):
 				#check if it approached from the top (the top row of the bar is inside character rectangle)
 				for point in range(bar.left,bar.left+bar.width):
 					if bar.collidepoint:
 						self.character.on_ground = True
 						self.character.top -= 1
-						#self.character.top = self.bar.top + self.character.height
-						#self.character.bottom = self.bar.top
-						#print 'COLLISION'
+						self.character.which_bar = self.bars[i]
 						break
+		#checks for collisions with the bottom of the screen
+		if self.character.bottom > 480:
+			self.character.top = 480-self.character.height
+			self.character.on_ground = True
+		#checks for collisions with the top of the screen
+		if self.character.top < 0:
+			self.character.top = 0
+		#checks for collisions with the left of the screen
+		if self.character.left < 0:
+			self.character.left = 0
+		#checks for collisions with the right of the screen
+		if self.character.left > 640-self.character.width:
+			self.character.left = 640-self.character.width
 
 	def jump(self):
-		"""Keeps character from jumping in mid-air"""
+		"""Keeps character from jumping in mid-air, and adjust bar-sitting to false"""
 		if self.character.on_ground:
-			pass
+			self.update_physics(0,-60)
+		else:
+			self.update_physics()
+		self.character.on_ground = False
+		self.character.which_bar = None
 
+	def sit_on_bar(self):
+		"""Makes the character sit on the bar when not jumping"""
+		if self.character.which_bar != None:
+			self.character.top = self.character.which_bar.top - self.character.height - 5
 
 class PyGameKeyboardController(object):
 # class PyGameController(object):
@@ -168,8 +172,7 @@ class PyGameKeyboardController(object):
 				self.model.update_physics(10)
 				self.model.detect_collisions()
 			if event.key == pygame.K_UP:
-				
-				self.model.update_physics(0,-60)
+				self.model.jump()
 				self.model.detect_collisions()
 
 class MusicController(object):
@@ -223,11 +226,13 @@ if __name__ == '__main__':
 			try:
 				current_levels=calculate_levels(data, chunk, sample_rate)
 				music.adjust_bars(current_levels)
+				model.sit_on_bar()
 			except audioop.error, e:
 				if e.message !="not a whole number of frames":
 					raise e
 		model.detect_collisions()
 		model.update_physics()
+		
 		view.draw()
 		time.sleep(.1)
 		data_in.pause(0)
