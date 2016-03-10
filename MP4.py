@@ -45,24 +45,21 @@ class PygameView(object):
 		self.screen.fill(pygame.Color('black')) #have a black background
 		#draw the music bars to the screen
 		for bar in self.model.bars:
-			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
-			pygame.draw.rect(self.screen, pygame.Color(bar.color),r)
+			pygame.draw.rect(self.screen, pygame.Color(bar.color),bar)
 		#draw the character to the screen
-		r = pygame.Rect(self.model.character.left,
-						self.model.character.top,
-						self.model.character.width,
-						self.model.character.height)
-		pygame.draw.rect(self.screen, pygame.Color('white'), r)
+		pygame.draw.rect(self.screen, pygame.Color('white'), self.model.character)
 		pygame.display.update()
 
 class Bar(pygame.Rect):
 	"""A single vertical rectangle in the music visualizer"""
+	
+
 	def __init__(self, left, top, width, height):
 		self.left = left
 		self.top = top
 		self.width = width
 		self.height = height
-		self.color = 'red' #TODO: make this more interesting colors
+		self.color = choice(['red','blue','green','orange','purple']) #TODO: make this more interesting colors
 
 class Character(pygame.Rect):
 	""" Our little main character (also a rectanlge) """
@@ -75,7 +72,7 @@ class Character(pygame.Rect):
 		self.bottom = self.top+self.height
 		self.vx = 0 #horizontal velocity
 		self.vy = 0 #vertical velocity
-		self.a = -10 #acceleration
+		self.a = -20 #acceleration
 		self.on_ground = False
 		self.which_bar = None
 
@@ -85,7 +82,6 @@ class MusicGameModel(object):
 	def __init__(self):
 		#Initialize bars
 		self.bars = []
-		self.pybars = []
 		self.MARGIN = 5
 		self.BAR_WIDTH = 50
 		self.BAR_HEIGHT = 20
@@ -97,11 +93,8 @@ class MusicGameModel(object):
 			self.bars.append(bar)
 		#initialize character
 		self.character = Character(self.MARGIN, self.MARGIN + 20, 20, 50)
-		self.pychar = pygame.Rect(self.character.left, self.character.top, self.character.width, self.character.height)
-		#Turn stuff into actual pygame objects
-		for bar in self.bars:
-			r = pygame.Rect(bar.left, bar.top, bar.width, bar.height)
-			self.pybars.append(r)
+	
+		#Turn stuff into actual pygame objects - MUAHAHAHA INHERITANCE
 
 	def update_physics(self, vx=0, vy=0):
 		"""Adjust position and velocity"""
@@ -114,19 +107,30 @@ class MusicGameModel(object):
 
 	def detect_collisions(self):
 		"""checks if there are collisions with anything. If so, moves the character up out of the way"""
-		self.pychar = pygame.Rect(self.character.left, self.character.top, self.character.width, self.character.height)
 		# #Turn stuff into actual pygame objects - unnecessary because inheritance!
 		for bar in self.bars:
 			i = self.bars.index(bar)
 			#check if the bar and character are colliding
 			if bar.colliderect(self.character):
 				#check if it approached from the top (the top row of the bar is inside character rectangle)
+				right_point=(bar.left+bar.width+10, bar.top-30)
+				left_point=(bar.left, bar.top-30)
+				if bar.collidepoint(right_point):
+					self.character.move(-5,0)
+					#print 'COLLIDE RIGHT'
+					break
+				if bar.collidepoint(left_point):
+					self.character.move(5,0)
+					#print 'COLLIDE LEFT'
+					break
 				for point in range(bar.left,bar.left+bar.width):
 					if bar.collidepoint:
 						self.character.on_ground = True
 						self.character.top -= 1
 						self.character.which_bar = self.bars[i]
+						#print 'COLLIDE BOTTOM'
 						break
+		
 		#checks for collisions with the bottom of the screen
 		if self.character.bottom > 480:
 			self.character.top = 480-self.character.height
@@ -144,7 +148,7 @@ class MusicGameModel(object):
 	def jump(self):
 		"""Keeps character from jumping in mid-air, and adjust bar-sitting to false"""
 		if self.character.on_ground:
-			self.update_physics(0,-60)
+			self.update_physics(0,-100)
 		else:
 			self.update_physics()
 		self.character.on_ground = False
@@ -153,7 +157,7 @@ class MusicGameModel(object):
 	def sit_on_bar(self):
 		"""Makes the character sit on the bar when not jumping"""
 		if self.character.which_bar != None:
-			self.character.top = self.character.which_bar.top - self.character.height - 5
+			self.character.top = self.character.which_bar.top - self.character.height - 18
 
 class PyGameKeyboardController(object):
 # class PyGameController(object):
