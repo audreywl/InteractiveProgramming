@@ -32,6 +32,10 @@ def calculate_levels(data, chunk,sample_rate):
 	matrix=matrix.tolist()
 	return matrix
 
+pygame.font.init
+print pygame.font.get_default_font()
+print pygame.font.match_font('freesansbold')
+
 class PygameView(object):
 	""" Visualizes the music game in a pygame window """
 	def __init__(self, model, screen):
@@ -39,6 +43,7 @@ class PygameView(object):
 			and screen. """
 		self.model = model
 		self.screen = screen
+		self.font = pygame.font.Font("freesansbold.ttf",30)
 
 	def draw(self):
 		""" Draw the game state to the screen """
@@ -49,6 +54,14 @@ class PygameView(object):
 		#draw the character to the screen
 		pygame.draw.rect(self.screen, pygame.Color('white'), self.model.character)
 		pygame.display.update()
+
+	def count(self):
+		counter = str(self.model.character.num_count)
+
+		text = self.font.render(counter,True,(255,255,255))
+		self.screen.blit(text,(10,10))
+		pygame.display.update()
+
 
 class Bar(pygame.Rect):
 	"""A single vertical rectangle in the music visualizer"""
@@ -75,6 +88,8 @@ class Character(pygame.Rect):
 		self.a = -20 #acceleration
 		self.on_ground = False
 		self.which_bar = None
+		self.num_count = 0
+		self.is_right = True
 
 	
 class MusicGameModel(object):
@@ -130,7 +145,6 @@ class MusicGameModel(object):
 						self.character.which_bar = self.bars[i]
 						#print 'COLLIDE BOTTOM'
 						break
-		
 		#checks for collisions with the bottom of the screen
 		if self.character.bottom > 480:
 			self.character.top = 480-self.character.height
@@ -141,9 +155,15 @@ class MusicGameModel(object):
 		#checks for collisions with the left of the screen
 		if self.character.left < 0:
 			self.character.left = 0
+			if not self.character.is_right:
+				self.character.num_count+=1
+				self.character.is_right = True
 		#checks for collisions with the right of the screen
 		if self.character.left > 640-self.character.width:
-			self.character.left = 640-self.character.width
+			self.character.left = 640 - self.character.width
+			if self.character.is_right:
+				self.character.num_count +=1
+				self.character.is_right = False
 
 	def jump(self):
 		"""Keeps character from jumping in mid-air, and adjust bar-sitting to false"""
@@ -158,6 +178,7 @@ class MusicGameModel(object):
 		"""Makes the character sit on the bar when not jumping"""
 		if self.character.which_bar != None:
 			self.character.top = self.character.which_bar.top - self.character.height - 18
+
 
 class PyGameKeyboardController(object):
 # class PyGameController(object):
@@ -238,5 +259,6 @@ if __name__ == '__main__':
 		model.update_physics()
 		
 		view.draw()
+		view.count()
 		time.sleep(.1)
 		data_in.pause(0)
